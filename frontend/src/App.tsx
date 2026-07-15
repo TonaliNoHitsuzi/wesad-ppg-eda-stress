@@ -393,33 +393,45 @@ export default function App() {
   const [metrics, setMetrics] = useState<ModelMetrics>(mockModelMetrics);
   const [ablation, setAblation] = useState<AblationComparison>(mockAblation);
   const [subjectLosos, setSubjectLosos] = useState({ accuracy: 0, macro_f1: 0 });
-  const [windowState, setWindowState] = useState<"baseline" | "stress" | "amusement">("stress");
   const [recall, setRecall] = useState<Record<string, number>>({ baseline: 0, stress: 0, amusement: 0 });
+  const [subjectBundle, setSubjectBundle] = useState<SubjectBundle | null>(null);
+  const [selectedState, setSelectedState] = useState<"baseline" | "stress" | "amusement">("stress");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 15 名被试（无 S12）
   const SUBJECTS = ["S2","S3","S4","S5","S6","S7","S8","S9","S10","S11","S13","S14","S15","S16","S17"];
   const [currentSubject, setCurrentSubject] = useState("S2");
 
-  // 按被试切换：fetch 该被试的打包 JSON，刷新被试级面板（聚合面板不动）
+  // 把某状态的信号套到展示面板
+  function applyState(bundle: SubjectBundle | null, stateName: "baseline" | "stress" | "amusement") {
+    setSelectedState(stateName);
+    const view = bundle?.states[stateName];
+    if (view) {
+      setPPGSignal(view.signal_ppg);
+      setEDASignal(view.signal_eda);
+      setSpectrum(view.spectrum);
+      setSpectrogram(view.spectrogram);
+    }
+  }
+
+  // 按被试切换：fetch 该被试的打包 JSON
   async function loadSubjectData(sid: string) {
     const data = await loadJson<SubjectBundle | null>(`/data/subjects/${sid}.json`, null);
     if (!data) return;
+    setSubjectBundle(data);
     setSubjectInfo((prev) => ({
       ...prev,
       subject_id: data.subject_id,
-      current_state: data.current_state,
-      confidence: data.confidence,
       recording_duration: `~${data.recording_duration_min} min`,
     }));
-    setPPGSignal(data.signal_ppg);
-    setEDASignal(data.signal_eda);
-    setSpectrum(data.spectrum);
-    setSpectrogram(data.spectrogram);
-    setPrediction(data.prediction);
-    setSubjectLosos(data.loso);
-    setWindowState(data.window_state);
     setRecall(data.recall);
+    setPrediction({ true_label: selectedState, predicted_label: data.prediction.predicted_label,
+                   probabilities: data.prediction.probabilities });
+    setSubjectLosos(data.loso);
+    // 若当前选中状态在该被试存在则套用，否则回退到首个可用状态
+    const want = data.states[selectedState] ? selectedState
+      : (data.states.stress ? "stress" : Object.keys(data.states)[0] as any);
+    applyState(data, want);
   }
 
   // 加载外部数据（如果存在）
@@ -503,6 +515,25 @@ export default function App() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+              <div className="flex items-center bg-slate-100 rounded p-0.5">
+                {(["baseline", "stress", "amusement"] as const).map((st) => {
+                  const ok = !!subjectBundle?.states[st];
+                  const active = selectedState === st;
+                  return (
+                    <button
+                      key={st}
+                      disabled={!ok}
+                      onClick={() => applyState(subjectBundle, st)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                        active ? "bg-indigo-600 text-white" : ok ? "text-slate-600 hover:bg-slate-200" : "text-slate-300 cursor-not-allowed"
+                      }`}
+                      title={ok ? `查看${stateLabels[st]}段` : "该被试无此状态干净段"}
+                    >
+                      {stateLabels[st]}
+                    </button>
+                  );
+                })}
+              </div>
               <span className="text-[10px] text-slate-400">LOSO acc {(subjectLosos.accuracy * 100).toFixed(1)}%</span>
             </div>
           </div>
@@ -512,20 +543,20 @@ export default function App() {
       <main className="max-w-[1600px] mx-auto px-4 py-4 space-y-4">
         {/* ====== 第一行：状态概览 ====== */}
         <div className="grid grid-cols-4 gap-4">
-          {/* 展示窗口状态 + 逐类检出率 */}
+          {/* 展示状态 + 逐类检出率 */}
           <Card className="col-span-1 border-l-4 border-l-indigo-500">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
                 <Brain className="w-3.5 h-3.5" />
-                展示窗口状态（真实标签）
+                当前查看状态（真实标签）
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl font-bold text-slate-800">
-                  {stateLabels[windowState] || windowState}
+                  {stateLabels[selectedState] || selectedState}
                 </span>
-                <span className="text-[10px] text-slate-400">代表性 10s 窗口</span>
+                <span className="text-[10px] text-slate-400">10s 代表性窗口</span>
               </div>
               <div className="space-y-1">
                 {(["stress", "baseline", "amusement"] as const).map((s) => (
@@ -543,7 +574,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-400 mt-1.5">该被试 LOSO 逐类检出率</p>
+              <p className="text-[10px] text-slate-400 mt-1.5">该被试 LOSO 逐类检出率（高亮=当前查看）</p>
             </CardContent>
           </Card>
 

@@ -221,17 +221,19 @@ export interface AblationComparison {
 }
 
 /** 被试切换：frontend/public/data/subjects/S{X}.json（每被试一个打包文件） */
-export interface SubjectBundle {
-  subject_id: string;
-  recording_duration_min: number;
-  window_state: "baseline" | "stress" | "amusement";
-  current_state: "baseline" | "stress" | "amusement";
-  confidence: number;
-  recall: Record<string, number>;
+export interface StateView {
   signal_ppg: SignalData;
   signal_eda: SignalData;
   spectrum: SpectrumData;
   spectrogram: SpectrogramData;
-  prediction: PredictionResult;
+}
+
+export interface SubjectBundle {
+  subject_id: string;
+  recording_duration_min: number;
+  states: Record<string, StateView>;  // baseline / stress / amusement
+  recall: Record<string, number>;
+  prediction: { predicted_label: string; probabilities: Record<string, number> };
+  confidence: number;
   loso: { accuracy: number; macro_f1: number };
 }

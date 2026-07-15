@@ -191,3 +191,31 @@ export interface ModelMetrics {
   params_count: number;
   model_size_mb: number;
 }
+
+/** 文件11: ablation_comparison.json（H2 消融实验，新增）
+ * {
+ *   "variants": [
+ *     { "name": "Dual", "accuracy": 0.749, "macro_f1": 0.71, "params": 21627 }, ...
+ *   ],
+ *   "wilcoxon": [
+ *     { "comparison": "Dual vs PPG", "p_value": 0.001, "significant": true }, ...
+ *   ]
+ * }
+ */
+export interface AblationVariant {
+  name: "Dual" | "Late" | "EDA" | "PPG" | string;
+  accuracy: number;
+  macro_f1: number;
+  params: number;
+}
+
+export interface WilcoxonTest {
+  comparison: string;
+  p_value: number;
+  significant: boolean;
+}
+
+export interface AblationComparison {
+  variants: AblationVariant[];
+  wilcoxon: WilcoxonTest[];
+}

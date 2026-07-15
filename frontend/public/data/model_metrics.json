@@ -1,0 +1,21 @@
+{
+  "accuracy": 0.7494,
+  "macro_f1": 0.7171,
+  "precision": {
+    "baseline": 0.849,
+    "stress": 0.871,
+    "amusement": 0.417
+  },
+  "recall": {
+    "baseline": 0.716,
+    "stress": 0.883,
+    "amusement": 0.615
+  },
+  "f1": {
+    "baseline": 0.777,
+    "stress": 0.877,
+    "amusement": 0.497
+  },
+  "params_count": 21627,
+  "model_size_mb": 0.083
+}

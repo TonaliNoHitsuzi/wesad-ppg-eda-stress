@@ -1,0 +1,9 @@
+{
+  "true_label": "stress",
+  "predicted_label": "stress",
+  "probabilities": {
+    "baseline": 0.082,
+    "stress": 0.873,
+    "amusement": 0.045
+  }
+}

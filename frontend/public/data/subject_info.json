@@ -1,0 +1,19 @@
+{
+  "subject_id": "S2",
+  "signal_quality": "excellent",
+  "current_state": "stress",
+  "confidence": 0.873,
+  "recording_duration": "~101 min",
+  "ppg_sampling_rate": 64,
+  "eda_sampling_rate": 4,
+  "states": [
+    "baseline",
+    "stress",
+    "amusement"
+  ],
+  "state_counts": {
+    "baseline": 3500,
+    "stress": 1965,
+    "amusement": 1095
+  }
+}

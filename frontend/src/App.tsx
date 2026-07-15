@@ -48,6 +48,7 @@ import type {
   TrainingCurves,
   HRVFeatureData,
   ModelMetrics,
+  AblationComparison,
 } from "@/types/dashboard";
 import {
   mockSubjectInfo,
@@ -60,6 +61,7 @@ import {
   mockTrainingCurves,
   mockHRVFeatures,
   mockModelMetrics,
+  mockAblation,
 } from "@/lib/mockData";
 
 /* ────────── 通用数据加载工具 ────────── */
@@ -323,6 +325,58 @@ function buildProbOption(pred: PredictionResult) {
   };
 }
 
+/** H2 消融对比柱状图（准确率 + macro F1，含显著性标注） */
+function buildAblationOption(ab: AblationComparison) {
+  const order = ["PPG", "EDA", "Late", "Dual"] as const;
+  const vmap = Object.fromEntries(ab.variants.map((v) => [v.name, v]));
+  const rows = order.map((n) => vmap[n]).filter(Boolean);
+  return {
+    animation: false,
+    grid: { top: 45, right: 20, bottom: 30, left: 50 },
+    legend: { data: ["Accuracy", "macro F1"], top: 4, textStyle: { fontSize: 11 } },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    xAxis: {
+      type: "category",
+      data: rows.map((v) => `${v.name}\n(${v.params.toLocaleString()} params)`),
+      axisLabel: { fontSize: 10 },
+    },
+    yAxis: { type: "value", min: 0.4, max: 0.85, axisLabel: { fontSize: 10 } },
+    series: [
+      {
+        name: "Accuracy",
+        type: "bar",
+        data: rows.map((v) => v.accuracy),
+        itemStyle: { color: "#6366f1" },
+        barGap: "10%",
+      },
+      {
+        name: "macro F1",
+        type: "bar",
+        data: rows.map((v) => v.macro_f1),
+        itemStyle: {
+          color: (p: { dataIndex: number }) =>
+            rows[p.dataIndex]?.name === "Dual" ? "#10b981" : "#f59e0b",
+        },
+      },
+      {
+        // 显著性标注（仅 Dual 柱顶部）
+        type: "custom",
+        renderItem: (params: { dataIndex: number }, api: { value: (i: number) => number; coord: (v: number[]) => number[] }) => {
+          const dualIdx = rows.findIndex((v) => v.name === "Dual");
+          if (params.dataIndex !== dualIdx) return null;
+          const point = api.coord([dualIdx, api.value(0)]);
+          return {
+            type: "text",
+            style: { text: "★ p=0.001\nvs PPG", x: point[0] - 26, y: point[1] - 34,
+              fill: "#16a34a", fontSize: 10, fontWeight: "bold", textAlign: "center" },
+          };
+        },
+        data: rows.map((v) => (v.name === "Dual" ? v.accuracy : 0)),
+      },
+    ],
+  };
+}
+
 /* ────────── 主组件 ────────── */
 
 export default function App() {
@@ -336,12 +390,13 @@ export default function App() {
   const [trainCurves, setTrainCurves] = useState<TrainingCurves>(mockTrainingCurves);
   const [hrvFeatures, setHRVFeatures] = useState<HRVFeatureData>(mockHRVFeatures);
   const [metrics, setMetrics] = useState<ModelMetrics>(mockModelMetrics);
+  const [ablation, setAblation] = useState<AblationComparison>(mockAblation);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 加载外部数据（如果存在）
   useEffect(() => {
     const loadAll = async () => {
-      const [si, ppg, eda, sp, spt, pr, cm, tc, hrv, mm] = await Promise.all([
+      const [si, ppg, eda, sp, spt, pr, cm, tc, hrv, mm, ab] = await Promise.all([
         loadJson<SubjectInfo>("/data/subject_info.json", mockSubjectInfo),
         loadJson<SignalData>("/data/signal_ppg.json", mockPPGSignal),
         loadJson<SignalData>("/data/signal_eda.json", mockEDASignal),
@@ -352,6 +407,7 @@ export default function App() {
         loadJson<TrainingCurves>("/data/training_curves.json", mockTrainingCurves),
         loadJson<HRVFeatureData>("/data/hrv_features.json", mockHRVFeatures),
         loadJson<ModelMetrics>("/data/model_metrics.json", mockModelMetrics),
+        loadJson<AblationComparison>("/data/ablation_comparison.json", mockAblation),
       ]);
       setSubjectInfo(si);
       setPPGSignal(ppg);
@@ -363,6 +419,7 @@ export default function App() {
       setTrainCurves(tc);
       setHRVFeatures(hrv);
       setMetrics(mm);
+      setAblation(ab);
     };
     loadAll();
   }, []);
@@ -662,6 +719,56 @@ export default function App() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* ====== 第六行：H2 消融实验（新增） ====== */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="col-span-2">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-xs font-medium text-slate-500">
+                H2 融合策略消融对比（15 折 LOSO）
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <ReactECharts
+                option={buildAblationOption(ablation)}
+                style={{ height: 250 }}
+                notMerge
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-slate-500">
+                Wilcoxon 显著性检验（vs Dual）
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5 pt-1">
+              {ablation.wilcoxon.map((w) => (
+                <div key={w.comparison} className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 font-mono">{w.comparison}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">p={w.p_value.toFixed(3)}</span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        w.significant
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
+                          : "bg-slate-50 text-slate-500 border-slate-200 text-[10px]"
+                      }
+                    >
+                      {w.significant ? "显著 **" : "不显著"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-relaxed">
+                特征级融合（Dual）显著优于 PPG 单模态；EDA-only 仅 3.1K 参数即达
+                66.8%，参数效率最高。
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* ====== 底部信息栏 ====== */}

@@ -15,6 +15,7 @@ import type {
   TrainingCurves,
   HRVFeatureData,
   ModelMetrics,
+  AblationComparison,
 } from "@/types/dashboard";
 
 /* ── 文件1: subject_info.json ── */
@@ -23,11 +24,11 @@ export const mockSubjectInfo: SubjectInfo = {
   signal_quality: "excellent",
   current_state: "stress",
   confidence: 0.873,
-  recording_duration: "60 min",
+  recording_duration: "~101 min",
   ppg_sampling_rate: 64,
   eda_sampling_rate: 4,
   states: ["baseline", "stress", "amusement"],
-  state_counts: { baseline: 120, stress: 240, amusement: 120 },
+  state_counts: { baseline: 3500, stress: 1965, amusement: 1095 },
 };
 
 /* ── 文件2: signal_ppg.json ── */
@@ -128,9 +129,9 @@ export const mockPrediction: PredictionResult = {
 export const mockConfusionMatrix: ConfusionMatrix = {
   labels: ["baseline", "stress", "amusement"],
   matrix: [
-    [108, 8, 4],
-    [12, 218, 10],
-    [5, 7, 108],
+    [2507, 186, 807],
+    [95, 1736, 134],
+    [352, 70, 673],
   ],
 };
 
@@ -178,11 +179,26 @@ export const mockHRVFeatures: HRVFeatureData = {
 
 /* ── 文件10: model_metrics.json ── */
 export const mockModelMetrics: ModelMetrics = {
-  accuracy: 0.876,
-  macro_f1: 0.868,
-  precision: { baseline: 0.89, stress: 0.92, amusement: 0.84 },
-  recall:    { baseline: 0.86, stress: 0.91, amusement: 0.85 },
-  f1:        { baseline: 0.87, stress: 0.91, amusement: 0.84 },
-  params_count: 45230,
-  model_size_mb: 0.18,
+  accuracy: 0.7494,
+  macro_f1: 0.7171,
+  precision: { baseline: 0.849, stress: 0.871, amusement: 0.417 },
+  recall:    { baseline: 0.716, stress: 0.883, amusement: 0.615 },
+  f1:        { baseline: 0.777, stress: 0.877, amusement: 0.497 },
+  params_count: 21627,
+  model_size_mb: 0.083,
+};
+
+/* ── 文件11: ablation_comparison.json（H2 消融，新增） ── */
+export const mockAblation: AblationComparison = {
+  variants: [
+    { name: "Dual", accuracy: 0.749, macro_f1: 0.71, params: 21627 },
+    { name: "Late", accuracy: 0.68, macro_f1: 0.665, params: 16006 },
+    { name: "EDA", accuracy: 0.668, macro_f1: 0.656, params: 3115 },
+    { name: "PPG", accuracy: 0.586, macro_f1: 0.53, params: 18771 },
+  ],
+  wilcoxon: [
+    { comparison: "Dual vs PPG", p_value: 0.001, significant: true },
+    { comparison: "Dual vs EDA", p_value: 0.104, significant: false },
+    { comparison: "Dual vs Late", p_value: 0.138, significant: false },
+  ],
 };

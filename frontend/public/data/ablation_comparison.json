@@ -1,0 +1,45 @@
+{
+  "variants": [
+    {
+      "name": "Dual",
+      "accuracy": 0.749,
+      "macro_f1": 0.71,
+      "params": 21627
+    },
+    {
+      "name": "Late",
+      "accuracy": 0.68,
+      "macro_f1": 0.665,
+      "params": 16006
+    },
+    {
+      "name": "EDA",
+      "accuracy": 0.668,
+      "macro_f1": 0.656,
+      "params": 3115
+    },
+    {
+      "name": "PPG",
+      "accuracy": 0.586,
+      "macro_f1": 0.53,
+      "params": 18771
+    }
+  ],
+  "wilcoxon": [
+    {
+      "comparison": "Dual vs PPG",
+      "p_value": 0.001,
+      "significant": true
+    },
+    {
+      "comparison": "Dual vs EDA",
+      "p_value": 0.104,
+      "significant": false
+    },
+    {
+      "comparison": "Dual vs Late",
+      "p_value": 0.138,
+      "significant": false
+    }
+  ]
+}

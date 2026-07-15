@@ -393,6 +393,8 @@ export default function App() {
   const [metrics, setMetrics] = useState<ModelMetrics>(mockModelMetrics);
   const [ablation, setAblation] = useState<AblationComparison>(mockAblation);
   const [subjectLosos, setSubjectLosos] = useState({ accuracy: 0, macro_f1: 0 });
+  const [windowState, setWindowState] = useState<"baseline" | "stress" | "amusement">("stress");
+  const [recall, setRecall] = useState<Record<string, number>>({ baseline: 0, stress: 0, amusement: 0 });
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 15 名被试（无 S12）
@@ -416,6 +418,8 @@ export default function App() {
     setSpectrogram(data.spectrogram);
     setPrediction(data.prediction);
     setSubjectLosos(data.loso);
+    setWindowState(data.window_state);
+    setRecall(data.recall);
   }
 
   // 加载外部数据（如果存在）
@@ -455,12 +459,6 @@ export default function App() {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  const stateColors: Record<string, string> = {
-    baseline: "bg-blue-100 text-blue-700 border-blue-200",
-    stress: "bg-red-100 text-red-700 border-red-200",
-    amusement: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  };
 
   const stateLabels: Record<string, string> = {
     baseline: "基线",
@@ -514,26 +512,38 @@ export default function App() {
       <main className="max-w-[1600px] mx-auto px-4 py-4 space-y-4">
         {/* ====== 第一行：状态概览 ====== */}
         <div className="grid grid-cols-4 gap-4">
-          {/* 情感状态 */}
+          {/* 展示窗口状态 + 逐类检出率 */}
           <Card className="col-span-1 border-l-4 border-l-indigo-500">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
                 <Brain className="w-3.5 h-3.5" />
-                当前情感状态
+                展示窗口状态（真实标签）
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl font-bold text-slate-800">
-                  {stateLabels[subjectInfo.current_state] || subjectInfo.current_state}
+                  {stateLabels[windowState] || windowState}
                 </span>
-                <Badge className={`${stateColors[subjectInfo.current_state]} text-xs`}>
-                  {(subjectInfo.confidence * 100).toFixed(1)}%
-                </Badge>
+                <span className="text-[10px] text-slate-400">代表性 10s 窗口</span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                模型置信度 / 三分类输出
-              </p>
+              <div className="space-y-1">
+                {(["stress", "baseline", "amusement"] as const).map((s) => (
+                  <div key={s} className="flex items-center gap-2 text-[11px]">
+                    <span className="text-slate-500 w-8">{stateLabels[s]}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${s === "stress" ? "bg-rose-500" : s === "baseline" ? "bg-blue-500" : "bg-emerald-500"}`}
+                        style={{ width: `${(recall[s] || 0) * 100}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-slate-700 w-9 text-right">
+                      {((recall[s] || 0) * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1.5">该被试 LOSO 逐类检出率</p>
             </CardContent>
           </Card>
 
@@ -719,7 +729,7 @@ export default function App() {
             <Card>
               <CardHeader className="pb-0">
                 <CardTitle className="text-xs font-medium text-slate-500">
-                  预测概率分布
+                  预测分布（全窗口聚合）
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-2">

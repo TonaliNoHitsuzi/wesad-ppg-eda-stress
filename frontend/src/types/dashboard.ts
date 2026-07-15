@@ -224,8 +224,10 @@ export interface AblationComparison {
 export interface SubjectBundle {
   subject_id: string;
   recording_duration_min: number;
+  window_state: "baseline" | "stress" | "amusement";
   current_state: "baseline" | "stress" | "amusement";
   confidence: number;
+  recall: Record<string, number>;
   signal_ppg: SignalData;
   signal_eda: SignalData;
   spectrum: SpectrumData;

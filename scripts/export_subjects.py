@@ -38,18 +38,21 @@ def find_clean_segment(label_64, lab_val, length_ppg):
 
 
 def prediction_from_confusion(cm_sub):
-    """从被试 3x3 混淆矩阵派生预测分布与主要预测状态。"""
+    """从被试 3x3 混淆矩阵派生预测分布、逐类 recall、主要预测状态。"""
     cm = np.array(cm_sub, dtype=float)
     total = cm.sum()
     if total == 0:
         return None
     col = cm.sum(axis=0)  # 各预测类样本数
+    row = cm.sum(axis=1)  # 各真值类样本数
     pred_dist = col / total
+    recall = np.diag(cm) / np.clip(row, 1, None)  # 逐类检出率
     maj = int(np.argmax(col))
     return {
-        "true_label": LABELS[int(np.argmax(cm.sum(axis=1)))],
+        "true_label": LABELS[int(np.argmax(row))],
         "predicted_label": LABELS[maj],
         "probabilities": {LABELS[i]: round(float(pred_dist[i]), 3) for i in range(3)},
+        "recall": {LABELS[i]: round(float(recall[i]), 3) for i in range(3)},
         "confidence": round(float(pred_dist[maj]), 3),
     }
 
@@ -65,13 +68,16 @@ def process_subject(sid):
 
     # 代表性窗口：优先压力段(label=2)，否则基线(1)
     win_s = None
+    window_lab = 2
     for lab in (2, 1, 3):
         s, _ = find_clean_segment(label_64, lab, N_PPG)
         if s is not None:
             win_s = s
+            window_lab = lab
             break
     if win_s is None:
         win_s = 0
+        window_lab = int(label_64[win_s]) if label_64[win_s] in (1, 2, 3) else 2
     e0 = win_s // (FS_BVP // FS_EDA)
 
     # FFT 30s 段（同状态）
@@ -100,8 +106,10 @@ def process_subject(sid):
     return {
         "subject_id": sid,
         "recording_duration_min": round(len(sig["bvp"]) / FS_BVP / 60),
+        "window_state": LABELS[window_lab - 1],  # 展示窗口的真实标签
         "current_state": pred["predicted_label"] if pred else "stress",
         "confidence": pred["confidence"] if pred else 0,
+        "recall": pred["recall"] if pred else {},
         "signal_ppg": {
             "sampling_rate": FS_BVP, "duration_seconds": 10,
             "data": bvp_z[win_s:win_s + N_PPG].round(4).tolist(),

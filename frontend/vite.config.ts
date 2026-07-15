@@ -1,18 +1,15 @@
 import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
-import { inspectAttr } from 'kimi-plugin-inspect-react'
 
 // https://vite.dev/config/
+// base: './' 使构建产物使用相对路径，便于 GitHub Pages 项目页部署
 export default defineConfig({
-  base: './',
-  plugins: [inspectAttr(), react()],
-  server: {
-    port: 3000,
-  },
+  base: "./",
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-});
+})

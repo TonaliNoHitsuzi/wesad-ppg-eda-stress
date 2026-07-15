@@ -50,6 +50,13 @@ data/raw/
 
 ## 获取方式
 
-WESAD 官方页面（需签署 EULA）：https://ubicomp.eti.uni-bamberg.de/datasets/sneha/wesad/
+**推荐 · 官方 sciebo 直链（zip，约 2 GB）**：
+```
+https://uni-siegen.sciebo.de/s/HGdUkoNlW1Ub0Gx/download
+```
+> ⚠️ **避坑提示**：浏览器直接下载常因 SSL/断点失败，**强烈建议用迅雷 / IDM 等多线程下载工具**，稳定且可断点续传。下载后解压，把 `WESAD/S*/S*.pkl`（S2–S17，无 S12）取出放入本目录。
 
-本项目不重新分发原始数据，请自行下载并遵守 WESAD 原始 EULA。
+**备选**：Kaggle 搜索 "WESAD" 镜像；或官方页面（需签署 EULA）https://ubicomp.eti.uni-bamberg.de/datasets/sneha/wesad/
+
+本项目不重新分发原始数据，请遵守 WESAD 原始 EULA（仅科学研究、非商业用途，引用 Schmidt et al., ICMI 2018）。
+

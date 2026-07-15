@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * 可穿戴情感状态监测系统 - 前端框架雏形
  * ============================================
@@ -69,7 +69,8 @@ import {
 
 async function loadJson<T>(path: string, fallback: T): Promise<T> {
   try {
-    const res = await fetch(path);
+    // BASE_URL 前缀适配 GitHub Pages 子路径部署（vite base: './'）
+    const res = await fetch(`${import.meta.env.BASE_URL}${path}`);
     if (!res.ok) throw new Error("Not found");
     return (await res.json()) as T;
   } catch {
@@ -438,17 +439,17 @@ export default function App() {
   useEffect(() => {
     const loadAll = async () => {
       const [si, ppg, eda, sp, spt, pr, cm, tc, hrv, mm, ab] = await Promise.all([
-        loadJson<SubjectInfo>("/data/subject_info.json", mockSubjectInfo),
-        loadJson<SignalData>("/data/signal_ppg.json", mockPPGSignal),
-        loadJson<SignalData>("/data/signal_eda.json", mockEDASignal),
-        loadJson<SpectrumData>("/data/spectrum_fft.json", mockSpectrum),
-        loadJson<SpectrogramData>("/data/spectrogram_stft.json", mockSpectrogram),
-        loadJson<PredictionResult>("/data/model_prediction.json", mockPrediction),
-        loadJson<ConfusionMatrix>("/data/confusion_matrix.json", mockConfusionMatrix),
-        loadJson<TrainingCurves>("/data/training_curves.json", mockTrainingCurves),
-        loadJson<HRVFeatureData>("/data/hrv_features.json", mockHRVFeatures),
-        loadJson<ModelMetrics>("/data/model_metrics.json", mockModelMetrics),
-        loadJson<AblationComparison>("/data/ablation_comparison.json", mockAblation),
+        loadJson<SubjectInfo>("data/subject_info.json", mockSubjectInfo),
+        loadJson<SignalData>("data/signal_ppg.json", mockPPGSignal),
+        loadJson<SignalData>("data/signal_eda.json", mockEDASignal),
+        loadJson<SpectrumData>("data/spectrum_fft.json", mockSpectrum),
+        loadJson<SpectrogramData>("data/spectrogram_stft.json", mockSpectrogram),
+        loadJson<PredictionResult>("data/model_prediction.json", mockPrediction),
+        loadJson<ConfusionMatrix>("data/confusion_matrix.json", mockConfusionMatrix),
+        loadJson<TrainingCurves>("data/training_curves.json", mockTrainingCurves),
+        loadJson<HRVFeatureData>("data/hrv_features.json", mockHRVFeatures),
+        loadJson<ModelMetrics>("data/model_metrics.json", mockModelMetrics),
+        loadJson<AblationComparison>("data/ablation_comparison.json", mockAblation),
       ]);
       setSubjectInfo(si);
       setPPGSignal(ppg);

@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+# 前端可视化验证系统
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+WESAD 三分类情感状态检测的研究成果验证看板。医学监护仪风格，支持 15 名被试切换 + 基线/压力/娱乐三状态段查看。
 
-Currently, two official plugins are available:
+详细面板说明见 [`网页说明.md`](网页说明.md)。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 技术栈
 
-## React Compiler
+React 19 + TypeScript + Vite 7 + ECharts 6 + Tailwind CSS 3 + shadcn/ui
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 运行
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # 输出到 dist/
+npm run lint     # ESLint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 架构
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**纯静态预计算**：Python 流水线一次性导出 JSON 到 `public/data/`，前端 fetch 读取，无后端服务。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `public/data/*.json`：全局聚合数据（混淆矩阵、HRV、训练曲线、消融等 5 个）
+- `public/data/subjects/S*.json`：15 个被试各自的打包数据（三状态波形 + 逐类检出率）
+- 缺失时回退到 `src/lib/mockData.ts`
+
+`src/types/dashboard.ts` 定义全部数据接口契约。`base: './'`（vite.config.ts）使构建产物使用相对路径，便于 GitHub Pages 部署。
+
+## 数据接口
+
+11 个 JSON 文件的结构详见 [`public/data/README.md`](public/data/README.md) 与 `src/types/dashboard.ts`。重新生成：
+
+```bash
+python ../src/export/export_json.py       # 全局 JSON
+python ../scripts/export_subjects.py      # 被试 JSON
 ```

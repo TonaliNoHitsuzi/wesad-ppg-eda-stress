@@ -206,13 +206,16 @@ def _eval_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
 # LOSO 主循环
 # ─────────────────────────────────────────────
 def run_loso(subjects: list[str] | None = None, *, variant: str = "dual",
-             epochs: int = 60) -> dict:
+             epochs: int = 60, cache: dict | None = None) -> dict:
     subjects = subjects or list_available_subjects()
     if not subjects:
         raise RuntimeError("data/raw 无可用被试，请先放入 WESAD 数据。")
     print(f"[LOSO] 被试 {len(subjects)} 人，variant={variant}")
-    print("[LOSO] 预处理 + 分窗 + SQI（仅执行一次，缓存复用）...")
-    cache = prepare_all_subjects(subjects)
+    if cache is None:
+        print("[LOSO] 预处理 + 分窗 + SQI（仅执行一次，缓存复用）...")
+        cache = prepare_all_subjects(subjects)
+    else:
+        print("[LOSO] 复用已构建的预处理缓存")
 
     per_subject = {}
     histories: dict[str, FoldHistory] = {}

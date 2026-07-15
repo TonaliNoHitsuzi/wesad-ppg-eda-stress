@@ -4,7 +4,9 @@
 
 技术栈：**Python**（PyTorch / NumPy / SciPy）+ **React**（TypeScript / Vite / ECharts）
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue)]() [![PyTorch](https://img.shields.io/badge/PyTorch-2.13-orange)]() [![License](https://img.shields.io/badge/License-MIT-green)]()
+🌐 **在线 Demo**：https://tonalinohitsuzi.github.io/wesad-ppg-eda-stress/
+
+[![Python](https://img.shields.io/badge/Python-3.12-blue)]() [![PyTorch](https://img.shields.io/badge/PyTorch-2.13-orange)]() [![License](https://img.shields.io/badge/License-MIT-green)]() [![Demo](https://img.shields.io/badge/Demo-GitHub%20Pages-success)](https://tonalinohitsuzi.github.io/wesad-ppg-eda-stress/)
 
 ## 成果一览
 
@@ -96,9 +98,9 @@ npm run build        # 生产构建到 frontend/dist/
 
 ## 在线 Demo（GitHub Pages）
 
-推送到 main 分支后，`.github/workflows/deploy.yml` 会自动构建并部署前端到 GitHub Pages。
+👉 **已部署**：https://tonalinohitsuzi.github.io/wesad-ppg-eda-stress/
 
-**首次启用**：仓库 Settings → Pages → Source 选 **GitHub Actions**。部署地址形如 `https://tonalynohitsuzi.github.io/wesad-ppg-eda-stress/`。
+推送到 main 分支时，`.github/workflows/deploy.yml` 自动构建并部署前端到 GitHub Pages（约 1–2 分钟）。可在仓库 Actions 页查看部署进度。
 
 ## 数据集与引用
 

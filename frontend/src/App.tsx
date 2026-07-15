@@ -49,6 +49,7 @@ import type {
   HRVFeatureData,
   ModelMetrics,
   AblationComparison,
+  SubjectBundle,
 } from "@/types/dashboard";
 import {
   mockSubjectInfo,
@@ -391,7 +392,31 @@ export default function App() {
   const [hrvFeatures, setHRVFeatures] = useState<HRVFeatureData>(mockHRVFeatures);
   const [metrics, setMetrics] = useState<ModelMetrics>(mockModelMetrics);
   const [ablation, setAblation] = useState<AblationComparison>(mockAblation);
+  const [subjectLosos, setSubjectLosos] = useState({ accuracy: 0, macro_f1: 0 });
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // 15 名被试（无 S12）
+  const SUBJECTS = ["S2","S3","S4","S5","S6","S7","S8","S9","S10","S11","S13","S14","S15","S16","S17"];
+  const [currentSubject, setCurrentSubject] = useState("S2");
+
+  // 按被试切换：fetch 该被试的打包 JSON，刷新被试级面板（聚合面板不动）
+  async function loadSubjectData(sid: string) {
+    const data = await loadJson<SubjectBundle | null>(`/data/subjects/${sid}.json`, null);
+    if (!data) return;
+    setSubjectInfo((prev) => ({
+      ...prev,
+      subject_id: data.subject_id,
+      current_state: data.current_state,
+      confidence: data.confidence,
+      recording_duration: `~${data.recording_duration_min} min`,
+    }));
+    setPPGSignal(data.signal_ppg);
+    setEDASignal(data.signal_eda);
+    setSpectrum(data.spectrum);
+    setSpectrogram(data.spectrogram);
+    setPrediction(data.prediction);
+    setSubjectLosos(data.loso);
+  }
 
   // 加载外部数据（如果存在）
   useEffect(() => {
@@ -422,6 +447,7 @@ export default function App() {
       setAblation(ab);
     };
     loadAll();
+    loadSubjectData("S2");
   }, []);
 
   // 时钟
@@ -466,7 +492,20 @@ export default function App() {
             <Separator orientation="vertical" className="h-4" />
             <div className="flex items-center gap-1.5">
               <User className="w-3.5 h-3.5" />
-              <span className="text-xs">被试 {subjectInfo.subject_id}</span>
+              <select
+                value={currentSubject}
+                onChange={(e) => {
+                  setCurrentSubject(e.target.value);
+                  loadSubjectData(e.target.value);
+                }}
+                className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                title="切换被试"
+              >
+                {SUBJECTS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <span className="text-[10px] text-slate-400">LOSO acc {(subjectLosos.accuracy * 100).toFixed(1)}%</span>
             </div>
           </div>
         </div>

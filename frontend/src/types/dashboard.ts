@@ -219,3 +219,17 @@ export interface AblationComparison {
   variants: AblationVariant[];
   wilcoxon: WilcoxonTest[];
 }
+
+/** 被试切换：frontend/public/data/subjects/S{X}.json（每被试一个打包文件） */
+export interface SubjectBundle {
+  subject_id: string;
+  recording_duration_min: number;
+  current_state: "baseline" | "stress" | "amusement";
+  confidence: number;
+  signal_ppg: SignalData;
+  signal_eda: SignalData;
+  spectrum: SpectrumData;
+  spectrogram: SpectrogramData;
+  prediction: PredictionResult;
+  loso: { accuracy: number; macro_f1: number };
+}

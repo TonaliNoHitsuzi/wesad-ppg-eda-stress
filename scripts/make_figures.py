@@ -53,10 +53,25 @@ eda_f = lowpass_eda(eda_raw)
 bvp_z, _, _ = per_subject_zscore(bandpass_ppg(bvp_raw))
 eda_z, _, _ = per_subject_zscore(lowpass_eda(eda_raw))
 
-# 选取一个 10s 窗口用于波形图（取压力段中部，便于看到明显脉搏）
-T0 = 25 * FS_BVP  # 起点 25s
 N_PPG = 10 * FS_BVP  # 640
 N_EDA = 10 * FS_EDA  # 40
+
+# 数据驱动选窗：在干净基线段(label=1, 100%纯净)中选 EDA-z 最接近全局中位数的窗口，
+# 保证 fig01/fig02 展示的是代表性信号而非过渡段离群值。
+from src.data.loader import resample_label
+label_64 = resample_label(sig["label"], len(bvp_raw), FS_BVP)
+_gmed = float(np.median(eda_z))
+_best, _best_d = None, None
+for _s in range(0, len(label_64) - N_PPG, int(2 * FS_BVP)):
+    if (label_64[_s:_s + N_PPG] == 1).mean() == 1.0:  # 纯净基线
+        _e0 = _s // (FS_BVP // FS_EDA)
+        _zm = float(np.mean(eda_z[_e0:_e0 + N_EDA]))
+        _d = abs(_zm - _gmed)
+        if _best_d is None or _d < _best_d:
+            _best, _best_d = _s, _d
+T0 = _best if _best is not None else (25 * FS_BVP)
+print(f"  representative baseline window: T0={T0} ({T0/FS_BVP:.0f}s), "
+      f"EDA-z mean={np.mean(eda_z[T0//(FS_BVP//FS_EDA):T0//(FS_BVP//FS_EDA)+N_EDA]):+.2f}")
 
 
 # ════════════════════════════════════════════
@@ -117,11 +132,14 @@ fig, ax = plt.subplots(figsize=(8, 4.5))
 for name, (f, p) in seg_specs.items():
     ax.plot(f[f <= 8], p[f <= 8], color=STATE_COLORS[name], lw=1.5,
             label=f"{name.capitalize()} (30 s)", alpha=0.85)
-# 标注 LF/HF 区域（按心率频率，PPG 频谱主峰在心率处）
-ax.axvspan(0.04, 0.15, alpha=0.08, color="gray")
-ax.axvspan(0.15, 0.40, alpha=0.08, color="orange")
-ax.text(0.095, ax.get_ylim()[1] * 0.92 if seg_specs else 1, "LF", ha="center", fontsize=9)
-ax.text(0.27, ax.get_ylim()[1] * 0.92 if seg_specs else 1, "HF", ha="center", fontsize=9)
+# 标注三频带 VLF / LF / HF（与正文 4.2 节对齐）
+ax.axvspan(0.003, 0.04, alpha=0.10, color="purple", label="VLF (0.003–0.04 Hz)")
+ax.axvspan(0.04, 0.15, alpha=0.10, color="gold", label="LF (0.04–0.15 Hz)")
+ax.axvspan(0.15, 0.40, alpha=0.10, color="darkorange", label="HF (0.15–0.40 Hz)")
+_ylim_top = ax.get_ylim()[1] if seg_specs else 1
+ax.text(0.021, _ylim_top * 0.95, "VLF", ha="center", fontsize=8, color="purple")
+ax.text(0.095, _ylim_top * 0.95, "LF", ha="center", fontsize=8, color="olive")
+ax.text(0.27, _ylim_top * 0.95, "HF", ha="center", fontsize=8, color="darkorange")
 format_axes(ax, title="FFT Power Spectrum of PPG (Baseline vs Stress)",
             xlabel="Frequency", ylabel="Power", unit_x="Hz", unit_y="dB")
 ax.set_xlim(0, 8)

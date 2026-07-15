@@ -1,0 +1,60 @@
+# ── Python ──────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.env
+.Python
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+.ruff_cache/
+
+# ── 数据（大文件不纳入版本控制）────────
+data/raw/*.pkl
+data/raw/*.zip
+data/raw/*.tar
+data/raw/*.tar.gz
+data/raw/WESAD/
+data/interim/*
+data/processed/*
+!data/**/README.md
+!data/**/.gitkeep
+
+# ── 训练产出（大权重文件）─────────────
+results/models/*.pth
+results/models/*.pt
+results/models/*.onnx
+*.ckpt
+
+# ── 前端 ────────────────────────────────
+node_modules/
+dist/
+.vite/
+.next/
+.nuxt/
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ── IDE / OS ────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 临时文件 ────────────────────────────
+*.log
+*.tmp
+*.bak

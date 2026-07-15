@@ -1,0 +1,32 @@
+# ============================================================
+# WESAD PPG+EDA 情感状态检测 —— Python 依赖
+# 测试环境：Python 3.12 + Windows + CUDA 13.x (RTX 4060)
+# ============================================================
+
+# ---- 科学计算基础 ----
+numpy>=1.26
+scipy>=1.11
+pandas>=2.1
+matplotlib>=3.8
+seaborn>=0.13
+
+# ---- 机器学习 / 指标 ----
+scikit-learn>=1.4
+
+# ---- 深度学习（CUDA 版需另行按官网索引安装）----
+# 见 https://pytorch.org/get-started/locally/
+torch>=2.2
+
+# ---- 信号处理 ----
+PyWavelets>=1.6
+# neurokit2>=0.2        # 可选：HRV / EDA 分析辅助库，按需启用
+# wfdb>=4.1             # 可选：PhysioNet 格式读取
+
+# ---- 工具 ----
+tqdm>=4.66
+joblib>=1.3
+pyyaml>=6.0
+
+# ---- Notebook（可选）----
+jupyter>=1.0
+ipykernel>=6.29
